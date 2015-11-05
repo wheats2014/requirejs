@@ -1,0 +1,58 @@
+以前了在项目中用过RequireJS，在过几天的一个项目中要用到，今天又查看了一下RequireJS文档。
+
+看到了一个用RequireJS加载css文件的插件，自己学习了一下，在这儿做个笔记
+
+1、RequireJS官方网站
+http://requirejs.org/
+
+2、加载css文件插件地址（当然了除了这个插件还有，很多其它的优秀的插件，在不断学习当中）
+https://github.com/guybedford/require-css
+
+3、config.js(RequireJS配置文件)
+require.config({
+    baseUrl:'scripts',
+    paths: {
+
+        'moduleA': './a.min',
+        'moduleB': './b.min'
+    },
+    map: {
+        '*': {
+            'css': './css'
+        }
+    },
+    shim : {
+        'moduleB': ['css!./style/style.css']
+    },
+    urlArgs: "t=" +  (new Date()).getTime()
+});
+
+
+map配置项RequireJS加载模块之前都先载入这个模块，这样别的模块依赖于css!./style/style.css这样的模块就知道怎么处理了
+shim配置在加载b的时候先要加载style.css文件
+
+4、b.js
+define(function(require, exports, module) {
+    return {
+        name: 'xiaomai b'
+    }
+});
+
+5、a.js
+define(function(require, exports, module) {
+    return {
+      name: 'xiaomai a'
+    }
+});
+
+6、main.js
+require(['moduleA', 'moduleB'], function(moduleA, moduleB) {
+    console.log(moduleA.name);
+    console.log(moduleB.name);
+});
+
+7、当前文件夹下面style/style.css设置为红色眼前一亮啊
+body{background: #ff0000}
+
+
+
