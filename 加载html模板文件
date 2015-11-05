@@ -1,0 +1,36 @@
+在项目当中会用到模板文件，使用text!加载html代码
+
+1、a.html
+<script id="a-template" type="text/x-handlebars-template">
+    <div>xiaomai</div>
+</script>
+
+2、js文件
+define(function(require, exports, module) {
+    require('jquery');
+    require(['text!a.html'], function(data) {
+        $('script#a-template').remove();
+        $('body').append(data);
+        $('body').append($('script#a-template').html());
+    });
+});
+
+把模板文件追加到body后面这只是个简单的例子，在实际的项目当中会用到模板解析的handlebars，把需要的数据解析到相当的代码中
+
+代码会是下面这样子的
+
+define(function(require, exports, module) {
+    require('jquery');
+    require(['text!a.html'], function(data) {
+        $('script#a-template').remove();
+        $('body').append(data);
+        var source = $("script#script#a-template").html(),
+					  template = Handlebars.compile(source),
+					  html = template({name: "xiaomai"});
+        $('body').append(html);
+    });
+});
+
+<script id="a-template" type="text/x-handlebars-template">
+    <div>{{name}}</div>
+</script>
