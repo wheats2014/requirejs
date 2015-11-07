@@ -1,0 +1,172 @@
+
+1、r.js的压缩工具使用UglifyJS或Closure Compiler。默认使用UglifyJS,此外r.js需要node.js环境
+r.js的下载地址 https://github.com/jrburke/r.js
+
+我的目录结构是这样的
+demo2
+  scripts
+    lib
+      jquery-1.9.0.js
+    plugins
+      jquery.cookie.js
+    style
+      style.css
+    a.html
+    a.js
+    b.js
+    build.js
+    config.js
+    css.js
+    main.js
+    r.js
+    require.js
+    text.js
+  demo.html
+  
+  2、下面了就对每个文件的内容做一点小小的说明
+  config.js
+  require.config({
+    baseUrl:'scripts',
+    paths: {
+        'jquery': 'lib/jquery-1.9.0',
+        'jqueryCookie': 'plugins/jquery.cookie',
+        'a': 'a',
+        'b': 'b'
+    },
+    map: { // 优先加载模块
+        '*': {
+            'css': 'css'
+        }
+    },
+    shim : {
+        'jquery': {
+            exports: 'jQuery'
+        },
+        'jqueryCookie': { 
+            deps: ['jquery'] // 配置依赖
+        }
+    },
+    urlArgs: "t=" +  (new Date()).getTime() // js文件加载的时候带上时间戳
+});
+
+3、build.js
+({
+    appDir: './', // 网站根目录
+    dir: '../build', // 生成文件夹的名称 
+
+    baseUrl: './',
+
+    modules: [
+        { name:'main'},	 // 每个模块的入口文件，依赖的js文件都会合并到一个文件中
+        { name:'list/list'}
+    ],
+    paths: {
+        jquery: "empty:" // jquery文件是在页面中独立引用的
+        /*jqueryCookie: "empty:"*/
+    },
+
+    mainConfigFile: './config.js', // 读取config.js文件内容
+
+    fileExclusionRegExp: /^(r|build|config)\.js|.*\.scss$/,	// 不用输出到build文件夹中的文件或文件夹进行过滤
+
+    optimizeCss: 'standard',
+    optimize: "uglify", 
+    keepBuildDir: true,
+    removeCombined: true   
+    //	 ,shim:{ .....}	 
+    ,excludeShallow: [
+
+    ]
+})
+
+4、运行node r.js -o build.js以后会生成下面这样一个文件目录
+
+demo2
+  build
+    lib
+      jquery-1.9.0.js
+    plugins
+    style
+    list
+      list.js
+    a.html
+    a.js
+    build.txt
+    css.js
+    main.js
+    require.js
+    text.js
+  scripts
+    lib
+      jquery-1.9.0.js
+    plugins
+      jquery.cookie.js
+    style
+      style.css
+    list
+      list.js
+    a.html
+    a.js
+    b.js
+    build.js
+    config.js
+    css.js
+    main.js
+    r.js
+    require.js
+    text.js
+  demo.html
+  
+  生成后的build文件夹中的内容发生了变化 
+  b.js不在了，在build.js配置中fileExclusionRegExp: /^(r|build|config)\.js|.*\.scss$/配置的过滤
+  r.js,config.js,build.js都没有被复制过去，
+  
+在main.js中引用了b.js,jquery.cookie.js而在文件夹中b.js和jquery.cookie.js不存在了，都合并在了一main.js文件中
+合并后的main.js文件的内容
+/*!
+ * jQuery Cookie Plugin v1.4.1
+ * https://github.com/carhartl/jquery-cookie
+ *
+ * Copyright 2013 Klaus Hartl
+ * Released under the MIT license
+ */
+
+(function(e){typeof define=="function"&&define.amd?define("jqueryCookie",["jquery"],e):typeof exports=="object"?e(require("jquery")):e(jQuery)})(function(e){function n(e){return u.raw?e:encodeURIComponent(e)}function r(e){return u.raw?e:decodeURIComponent(e)}function i(e){return n(u.json?JSON.stringify(e):String(e))}function s(e){e.indexOf('"')===0&&(e=e.slice(1,-1).replace(/\\"/g,'"').replace(/\\\\/g,"\\"));try{return e=decodeURIComponent(e.replace(t," ")),u.json?JSON.parse(e):e}catch(n){}}function o(t,n){var r=u.raw?t:s(t);return e.isFunction(n)?n(r):r}var t=/\+/g,u=e.cookie=function(t,s,a){if(s!==undefined&&!e.isFunction(s)){a=e.extend({},u.defaults,a);if(typeof a.expires=="number"){var f=a.expires,l=a.expires=new Date;l.setTime(+l+f*864e5)}return document.cookie=[n(t),"=",i(s),a.expires?"; expires="+a.expires.toUTCString():"",a.path?"; path="+a.path:"",a.domain?"; domain="+a.domain:"",a.secure?"; secure":""].join("")}var c=t?undefined:{},h=document.cookie?document.cookie.split("; "):[];for(var p=0,d=h.length;p<d;p++){var v=h[p].split("="),m=r(v.shift()),g=v.join("=");if(t&&t===m){c=o(g,s);break}!t&&(g=o(g))!==undefined&&(c[m]=g)}return c};u.defaults={},e.removeCookie=function(t,n){return e.cookie(t)===undefined?!1:(e.cookie(t,"",e.extend({},n,{expires:-1})),!e.cookie(t))}}),define("b",["require","exports","module","jqueryCookie"],function(e,t,n){return e("jqueryCookie"),e(["text!a.html"],function(e){$("script#a-template").remove(),$("body").append(e),$("body").append($("script#a-template").html()),$.cookie("name","xiaomai")}),{name:"xiaomai b"}}),require(["b"],function(e){$(document).ready(function(){alert(e.name)})}),define("main",function(){});
+
+
+而在demo.html中我们引用了main.js
+<script data-main="build/main.js" src="build/require.js"></script>
+<script src="scripts/lib/jquery-1.9.0.js"></script>
+
+在build.js文件夹我们有一段这样的配置
+    modules: [
+        { name:'main'},	 // 每个模块的入口文件，依赖的js文件都会合并到一个文件中
+        { name:'list/list'}
+    ],
+    
+    如果注释掉这些文件以后，a.js,b.js都会生成，在引用main.js的时候别忘了要加上配置信息
+    require.config({
+    baseUrl:'build',
+    paths: {
+        'jquery': 'lib/jquery-1.9.0',
+        'jqueryCookie': 'plugins/jquery.cookie',
+        'a': 'a',
+        'b': 'b'
+    },
+    map: {
+        '*': {
+            'css': 'css'
+        }
+    },
+    shim : {
+        'jquery': {
+            exports: 'jQuery'
+        },
+        'jqueryCookie': {
+            deps: ['jquery']
+        }
+    },
+    urlArgs: "t=" +  (new Date()).getTime()
+});
+
+这样在运行的时候就会分别加载，依赖的文件，今天就学了这么多，就写到这儿
